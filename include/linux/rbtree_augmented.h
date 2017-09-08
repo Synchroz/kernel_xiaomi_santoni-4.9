@@ -72,16 +72,6 @@ rb_insert_augmented_cached(struct rb_node *node,
 			      newleft, &root->rb_leftmost, augment->rotate);
 }
 
-static inline void
-rb_insert_augmented_cached(struct rb_node *node,
-			   struct rb_root_cached *root, bool newleft,
-			   const struct rb_augment_callbacks *augment)
-{
-	if (newleft)
-		root->rb_leftmost = node;
-	rb_insert_augmented(node, &root->rb_root, augment);
-}
-
 #define RB_DECLARE_CALLBACKS(rbstatic, rbname, rbstruct, rbfield,	\
 			     rbtype, rbaugmented, rbcompute)		\
 static inline void							\
