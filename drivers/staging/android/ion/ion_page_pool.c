@@ -27,7 +27,8 @@
 #include <linux/slab.h>
 #include <linux/swap.h>
 #include <linux/vmalloc.h>
-#include <linux/compaction.h>
+#include <linux/vmstat.h>
+#include <linux/mmzone.h>
 #include "ion_priv.h"
 
 #define ION_PAGE_CACHE	1
@@ -68,8 +69,10 @@ static void ion_page_pool_free_pages(struct ion_page_pool *pool,
 
 static int ion_page_pool_add(struct ion_page_pool *pool, struct page *page)
 {
-	spin_lock(&pool->lock);
-	page->private = ION_PAGE_CACHE;
+	int page_count = 1 << pool->order;
+
+	mutex_lock(&pool->mutex);
+
 	if (PageHighMem(page)) {
 		list_add_tail(&page->lru, &pool->high_items);
 		pool->high_count++;
@@ -82,13 +85,18 @@ static int ion_page_pool_add(struct ion_page_pool *pool, struct page *page)
 		__SetPageMovable(page, pool->inode->i_mapping);
 	mod_node_page_state(page_pgdat(page), NR_INDIRECTLY_RECLAIMABLE_BYTES,
 			    (1 << (PAGE_SHIFT + pool->order)));
-	spin_unlock(&pool->lock);
+
+	mod_zone_page_state(page_zone(page), NR_FILE_PAGES, page_count);
+	mod_zone_page_state(page_zone(page), NR_INACTIVE_FILE, page_count);
+
+	mutex_unlock(&pool->mutex);
 	return 0;
 }
 
 static struct page *ion_page_pool_remove(struct ion_page_pool *pool, bool high)
 {
 	struct page *page;
+	int page_count = 1 << pool->order;
 
 	if (high) {
 		BUG_ON(!pool->high_count);
@@ -105,6 +113,10 @@ static struct page *ion_page_pool_remove(struct ion_page_pool *pool, bool high)
 	list_del_init(&page->lru);
 	mod_node_page_state(page_pgdat(page), NR_INDIRECTLY_RECLAIMABLE_BYTES,
 			    -(1 << (PAGE_SHIFT + pool->order)));
+
+	mod_zone_page_state(page_zone(page), NR_INACTIVE_FILE, -page_count);
+	mod_zone_page_state(page_zone(page), NR_FILE_PAGES, -page_count);
+
 	return page;
 }
 
