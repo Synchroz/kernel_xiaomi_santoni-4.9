@@ -173,6 +173,9 @@ int dsi_display_set_backlight(void *display, u32 bl_lvl)
 	if (bl_temp != 0 && bl_temp < backlight_min)
 		bl_temp = backlight_min;
 
+	if (bl_temp != 0 && bl_temp < backlight_min)
+		bl_temp = backlight_min;
+
 	pr_debug("bl_scale = %u, bl_scale_ad = %u, bl_lvl = %u\n",
 		bl_scale, bl_scale_ad, (u32)bl_temp);
 
