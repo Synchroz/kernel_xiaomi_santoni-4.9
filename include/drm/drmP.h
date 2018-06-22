@@ -2,6 +2,7 @@
  * Internal Header for the Direct Rendering Manager
  *
  * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
+ * Copyright (C) 2018 XiaoMi, Inc.
  * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
  * Copyright (c) 2009-2010, Code Aurora Forum.
  * All rights reserved.
@@ -757,6 +758,16 @@ struct drm_minor {
 
 	struct list_head debugfs_list;
 	struct mutex debugfs_lock; /* Protects debugfs_list. */
+};
+
+/**
+*AOD brightness, hight brightness level 60nit, low brightness level 5nit
+*/
+#define DOZE_MIN_BRIGHTNESS_LEVEL	5
+enum {
+	DOZE_BRIGHTNESS_INVALID = 0,
+	DOZE_BRIGHTNESS_HBM,
+	DOZE_BRIGHTNESS_LBM,
 };
 
 /**

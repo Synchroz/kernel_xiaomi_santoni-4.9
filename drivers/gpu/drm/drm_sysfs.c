@@ -7,6 +7,7 @@
  * Copyright (c) 2004 Jon Smirl <jonsmirl@gmail.com>
  * Copyright (c) 2003-2004 Greg Kroah-Hartman <greg@kroah.com>
  * Copyright (c) 2003-2004 IBM Corp.
+ * Copyright (C) 2018 XiaoMi, Inc.
  *
  * This file is released under the GPLv2
  *
