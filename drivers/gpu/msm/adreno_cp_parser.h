@@ -15,6 +15,7 @@
 
 #include "adreno.h"
 
+<<<<<<< HEAD
 #if defined(CONFIG_ARCH_MSM8917) | defined(CONFIG_ARCH_MSM8920)
 extern const unsigned int a3xx_cp_addr_regs[];
 #endif
@@ -22,6 +23,8 @@ extern const unsigned int a3xx_cp_addr_regs[];
 extern const unsigned int a4xx_cp_addr_regs[];
 #endif
 
+=======
+>>>>>>> bbbe8bfbf071 (gpu: adreno: only compile Adreno 505 driver)
 /*
  * struct adreno_ib_object - Structure containing information about an
  * address range found in an IB
@@ -138,6 +141,7 @@ static inline void adreno_ib_init_ib_obj(uint64_t gpuaddr,
 static inline int adreno_cp_parser_getreg(struct adreno_device *adreno_dev,
 					enum adreno_cp_addr_regs reg_enum)
 {
+<<<<<<< HEAD
 	if (reg_enum == ADRENO_CP_ADDR_MAX)
 		return -EEXIST;
 
@@ -152,6 +156,9 @@ static inline int adreno_cp_parser_getreg(struct adreno_device *adreno_dev,
 #if defined(CONFIG_ARCH_MSM8937) | defined(CONFIG_ARCH_MSM8940) | defined(CONFIG_ARCH_MSM8953) | defined(CONFIG_ARCH_MSM8996) | defined(CONFIG_ARCH_MSMCOBALT) | defined(CONFIG_ARCH_SDM450)
 		return -EEXIST;
 #endif
+=======
+	return -EEXIST;
+>>>>>>> bbbe8bfbf071 (gpu: adreno: only compile Adreno 505 driver)
 }
 
 /*
@@ -169,6 +176,7 @@ static inline int adreno_cp_parser_regindex(struct adreno_device *adreno_dev,
 				enum adreno_cp_addr_regs start,
 				enum adreno_cp_addr_regs end)
 {
+<<<<<<< HEAD
 	int i;
 	const unsigned int *regs;
 
@@ -187,6 +195,8 @@ static inline int adreno_cp_parser_regindex(struct adreno_device *adreno_dev,
 	for (i = start; i <= end && i < ADRENO_CP_ADDR_MAX; i++)
 		if (regs[i] == offset)
 			return i;
+=======
+>>>>>>> bbbe8bfbf071 (gpu: adreno: only compile Adreno 505 driver)
 	return -EEXIST;
 }
 
