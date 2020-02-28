@@ -333,11 +333,11 @@ static void vmpressure_global(gfp_t gfp, unsigned long scanned, bool critical,
 	unsigned long pressure;
 	unsigned long stall;
 
+	if (critical)
+		scanned = calculate_vmpressure_win();
+
 	if (scanned) {
 		spin_lock(&vmpr->sr_lock);
-		if (!vmpr->scanned)
-			calculate_vmpressure_win();
-
 		vmpr->scanned += scanned;
 		vmpr->reclaimed += reclaimed;
 
@@ -349,7 +349,7 @@ static void vmpressure_global(gfp_t gfp, unsigned long scanned, bool critical,
 		reclaimed = vmpr->reclaimed;
 		spin_unlock(&vmpr->sr_lock);
 
-		if (scanned < vmpressure_win)
+		if (!critical && scanned < calculate_vmpressure_win())
 			return;
 	}
 
@@ -403,9 +403,6 @@ static void __vmpressure(gfp_t gfp, struct mem_cgroup *memcg, bool critical,
 void vmpressure(gfp_t gfp, struct mem_cgroup *memcg, bool tree,
 		unsigned long scanned, unsigned long reclaimed, int order)
 {
-	if (order > PAGE_ALLOC_COSTLY_ORDER)
-		return;
-
 	__vmpressure(gfp, memcg, false, tree, scanned, reclaimed);
 }
 
