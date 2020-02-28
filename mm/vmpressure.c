@@ -333,8 +333,12 @@ static void vmpressure_global(gfp_t gfp, unsigned long scanned, bool critical,
 	unsigned long pressure;
 	unsigned long stall;
 
-	if (critical)
-		scanned = calculate_vmpressure_win();
+	if (!scanned)
+		return;
+
+	spin_lock(&vmpr->sr_lock);
+	if (!vmpr->scanned)
+		calculate_vmpressure_win();
 
 	if (scanned) {
 		spin_lock(&vmpr->sr_lock);
