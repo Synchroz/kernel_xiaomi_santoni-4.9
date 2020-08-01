@@ -645,8 +645,12 @@ CDEFINES +=	-DWLAN_DEBUG \
 		-DSME_TRACE_RECORD \
 		-DPE_DEBUG_LOGW \
 		-DPE_DEBUG_LOGE \
-                -DDXE_TRACE \
-		-DDEBUG
+		-DDXE_TRACE \
+		-DANI_LOGDUMP \
+		-DWLAN_FEATURE_NEIGHBOR_ROAMING_DEBUG \
+		-DWLAN_FEATURE_VOWIFI_11R_DEBUG \
+                -DWLAN_VOWIFI_DEBUG \
+                -DWLANTL_DEBUG
 endif
 
 ifeq ($(CONFIG_SLUB_DEBUG_ON),y)
@@ -761,8 +765,7 @@ CDEFINES += -DEXISTS_MSM_SMSM
 endif
 
 # Fix build for GCC 4.7
-EXTRA_CFLAGS += $(call cc-disable-warning, maybe-uninitialized) -Wno-unused-function -Wno-unused-variable
-
+EXTRA_CFLAGS += -DNDEBUG $(call cc-disable-warning, maybe-uninitialized)
 
 # Silence Clang warning
 ifeq ($(cc-name),clang)
