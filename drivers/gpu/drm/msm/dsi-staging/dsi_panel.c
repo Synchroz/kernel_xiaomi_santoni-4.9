@@ -1447,30 +1447,13 @@ static int dsi_panel_parse_dfps_caps(struct dsi_dfps_capabilities *dfps_caps,
 		goto error;
 	}
 
-	of_find_property(of_node, "qcom,dsi-supported-dfps-list",
-			 &dfps_caps->dfps_list_len);
-	dfps_caps->dfps_list_len /= sizeof(u32);
-	if (dfps_caps->dfps_list_len < 1) {
-		pr_err("[%s] dfps refresh list not present\n", name);
-		rc = -EINVAL;
-		goto error;
-	}
+	dfps_caps->dfps_list_len = 3;
 
 	dfps_caps->dfps_list = kcalloc(dfps_caps->dfps_list_len, sizeof(u32),
 				       GFP_KERNEL);
-	if (!dfps_caps->dfps_list) {
-		rc = -ENOMEM;
-		goto error;
-	}
-
-	rc = of_property_read_u32_array(of_node, "qcom,dsi-supported-dfps-list",
-					dfps_caps->dfps_list,
-					dfps_caps->dfps_list_len);
-	if (rc) {
-		pr_err("[%s] dfps refresh rate list parse failed\n", name);
-		rc = -EINVAL;
-		goto error;
-	}
+	dfps_caps->dfps_list[0] = 30;
+	dfps_caps->dfps_list[1] = 45;
+	dfps_caps->dfps_list[2] = 60;
 
 	dfps_caps->dfps_support = true;
 
