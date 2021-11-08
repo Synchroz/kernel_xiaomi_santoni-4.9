@@ -20,6 +20,8 @@
 #include "tune.h"
 
 #define SUGOV_KTHREAD_PRIORITY	50
+#define UP_RATE_LIMIT_US		(5000)
+#define DOWN_RATE_LIMIT_US		(20000)
 
 struct sugov_tunables {
 	struct gov_attr_set attr_set;
@@ -756,8 +758,8 @@ static int sugov_init(struct cpufreq_policy *policy)
 	 * intializing up_rate/down_rate to 0 explicitly in kernel
 	 * since WALT expects so by default.
 	 */
-	tunables->up_rate_limit_us = 0;
-	tunables->down_rate_limit_us = 0;
+	tunables->up_rate_limit_us = UP_RATE_LIMIT_US / NSEC_PER_USEC;
+	tunables->down_rate_limit_us = DOWN_RATE_LIMIT_US * NSEC_PER_USEC;
 #else
 	tunables->up_rate_limit_us = LATENCY_MULTIPLIER;
 	tunables->down_rate_limit_us = LATENCY_MULTIPLIER;
