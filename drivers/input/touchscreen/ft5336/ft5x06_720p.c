@@ -814,8 +814,6 @@ static int fb_notifier_callback(struct notifier_block *self,
 			ft5x06_data && ft5x06_data->client) {
 		blank = evdata->data;
 		if (*blank == FB_BLANK_UNBLANK)
-				                || *blank == FB_BLANK_NORMAL
-                                || *blank == FB_BLANK_VSYNC_SUSPEND) {
 #ifdef CONFIG_TOUCHSCREEN_DOUBLETAP2WAKE
 			set_lcd_status(true);
 #endif
