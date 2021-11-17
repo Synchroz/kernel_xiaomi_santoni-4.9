@@ -818,7 +818,7 @@ static int fb_notifier_callback(struct notifier_block *self,
 			set_lcd_status(true);
 #endif
                         schedule_work(&ft5x06_data->fb_notify_work);
-		} else if (*blank == FB_BLANK_POWERDOWN) {
+		 else if (*blank == FB_BLANK_POWERDOWN) {
 #ifdef CONFIG_TOUCHSCREEN_DOUBLETAP2WAKE
 			set_lcd_status(false);
 #endif
