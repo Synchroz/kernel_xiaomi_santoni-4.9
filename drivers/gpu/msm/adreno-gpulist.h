@@ -14,7 +14,6 @@
 #define ANY_ID (~0)
 
 static const struct adreno_gpu_core adreno_gpulist[] = {
-#if defined(CONFIG_ARCH_MSM8917) | defined(CONFIG_ARCH_MSM8920)
 	{
 		.gpurev = ADRENO_REV_A505,
 		.core = 5,
