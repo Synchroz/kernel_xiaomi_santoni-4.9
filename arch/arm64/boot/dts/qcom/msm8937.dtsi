@@ -113,21 +113,23 @@
 			compatible = "shared-dma-pool";
 			reusable;
 			alignment = <0 0x400000>;
-			size = <0 0x1000000>;
+			size = <0 0x400000>;
 		};
 
 		cont_splash_mem: splash_region@83000000 {
 			reg = <0x0 0x90000000 0x0 0x1400000>;
 		};
 
-		/* global autoconfigured region for contiguous allocations */
-		linux,cma {
+		dump_mem: mem_dump_region {
 			compatible = "shared-dma-pool";
-			alloc-ranges = <0 0x00000000 0 0xffffffff>;
 			reusable;
-			alignment = <0 0x400000>;
-			size = <0 0x4000000>;
-			linux,cma-default;
+			size = <0x400000>;
+		};
+
+		pstore_reserve_mem: pstore_reserve_mem_region@0 {
+			compatible = "removed-dma-pool";
+			no-map;
+			reg = <0x0 0x9ff00000 0x0 0x300000>;
 		};
 	};
 
