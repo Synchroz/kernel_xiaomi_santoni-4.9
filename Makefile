@@ -1,6 +1,6 @@
 VERSION = 4
 PATCHLEVEL = 9
-SUBLEVEL = 270
+SUBLEVEL = 280
 EXTRAVERSION =
 NAME = Roaring Lionus
 
@@ -814,29 +814,11 @@ KBUILD_CFLAGS += $(call cc-disable-warning, tautological-compare)
 # See modpost pattern 2
 KBUILD_CFLAGS += $(call cc-option, -mno-global-merge,)
 KBUILD_CFLAGS += $(call cc-option, -fcatch-undefined-behavior)
-ifdef CONFIG_INLINE_OPTIMIZATION
-KBUILD_CFLAGS	+= -mllvm -inline-threshold=600
-KBUILD_CFLAGS	+= -mllvm -inlinehint-threshold=750
 endif
-
-# Future support for zero initialization is still being debated, see
-# https://bugs.llvm.org/show_bug.cgi?id=45497. These flags are subject to being
-# renamed or dropped.
-KBUILD_CFLAGS   += -ftrivial-auto-var-init=zero -enable-trivial-auto-var-init-zero-knowing-it-will-be-removed-from-clang
-else
 
 # These warnings generated too much noise in a regular build.
 # Use make W=1 to enable them (see scripts/Makefile.extrawarn)
 KBUILD_CFLAGS += $(call cc-disable-warning, unused-but-set-variable)
-ifdef CONFIG_INLINE_OPTIMIZATION
-KBUILD_CFLAGS	+= --param max-inline-insns-single=600
-KBUILD_CFLAGS	+= --param max-inline-insns-auto=750
-# We limit inlining to 5KB on the stack.
-KBUILD_CFLAGS	+= --param large-stack-frame=12288
-KBUILD_CFLAGS	+= --param inline-min-speedup=5
-KBUILD_CFLAGS	+= --param inline-unit-growth=60
-endif
-endif
 
 KBUILD_CFLAGS += $(call cc-disable-warning, unused-const-variable)
 ifdef CONFIG_FRAME_POINTER
