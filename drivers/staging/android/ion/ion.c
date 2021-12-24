@@ -192,7 +192,35 @@ void *__ion_map_kernel(struct ion_buffer *buffer)
 
 void __ion_unmap_kernel(struct ion_buffer *buffer)
 {
-	struct ion_heap *heap = buffer->heap;
+	struct ion_buffer *buffer = handle->buffer;
+	void *vaddr;
+
+	if (handle->kmap_cnt) {
+		if (handle->kmap_cnt == INT_MAX)
+			return ERR_PTR(-EOVERFLOW);
+
+		handle->kmap_cnt++;
+		return buffer->vaddr;
+	}
+	vaddr = ion_buffer_kmap_get(buffer);
+	if (IS_ERR(vaddr))
+		return vaddr;
+	handle->kmap_cnt++;
+	return vaddr;
+}
+
+static void ion_buffer_kmap_put(struct ion_buffer *buffer)
+{
+	buffer->kmap_cnt--;
+	if (!buffer->kmap_cnt) {
+		buffer->heap->ops->unmap_kernel(buffer->heap, buffer);
+		buffer->vaddr = NULL;
+	}
+}
+
+static void ion_handle_kmap_put(struct ion_handle *handle)
+{
+	struct ion_buffer *buffer = handle->buffer;
 
 	mutex_lock(&buffer->kmap_lock);
 	if (!--buffer->kmap_refcount)
