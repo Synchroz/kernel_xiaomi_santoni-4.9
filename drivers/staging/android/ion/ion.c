@@ -192,7 +192,7 @@ void *__ion_map_kernel(struct ion_buffer *buffer)
 
 void __ion_unmap_kernel(struct ion_buffer *buffer)
 {
-	struct ion_buffer *buffer = handle->buffer;
+	struct ion_heap *heap = buffer->heap;
 	void *vaddr;
 
 	if (handle->kmap_cnt) {
