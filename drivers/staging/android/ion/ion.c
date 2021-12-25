@@ -9,6 +9,7 @@
 #include <linux/msm_ion.h>
 #include <linux/slab.h>
 #include <linux/uaccess.h>
+#include "ion.h"
 #include "compat_ion.h"
 #include "ion_priv.h"
 
@@ -192,8 +193,7 @@ void *__ion_map_kernel(struct ion_buffer *buffer)
 
 void __ion_unmap_kernel(struct ion_buffer *buffer)
 {
-	struct ion_buffer *buffer = handle->buffer;
-	void *vaddr;
+	struct ion_heap *heap = buffer->heap;
 
 	if (handle->kmap_cnt) {
 		if (handle->kmap_cnt == INT_MAX)
