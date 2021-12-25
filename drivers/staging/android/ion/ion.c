@@ -9,9 +9,9 @@
 #include <linux/msm_ion.h>
 #include <linux/slab.h>
 #include <linux/uaccess.h>
-#include "ion.h"
 #include "compat_ion.h"
 #include "ion_priv.h"
+#include "ion.h"
 
 struct ion_device {
 	struct miscdevice dev;
@@ -188,12 +188,42 @@ void *__ion_map_kernel(struct ion_buffer *buffer)
 	}
 	mutex_unlock(&buffer->kmap_lock);
 
+void ion_free(struct ion_client *client, struct ion_handle *handle)
+{
+	BUG_ON(client != handle->client);
+
+	mutex_lock(&client->lock);
+	ion_free_nolock(client, handle);
+	mutex_unlock(&client->lock);
+}
+EXPORT_SYMBOL(ion_free);
+
+static void *ion_buffer_kmap_get(struct ion_buffer *buffer)
+{
+	void *vaddr;
+
+	if (buffer->kmap_cnt) {
+		if (buffer->kmap_cnt == INT_MAX)
+			return ERR_PTR(-EOVERFLOW);
+
+		buffer->kmap_cnt++;
+		return buffer->vaddr;
+	}
+	vaddr = buffer->heap->ops->map_kernel(buffer->heap, buffer);
+	if (WARN_ONCE(vaddr == NULL,
+		      "heap->ops->map_kernel should return ERR_PTR on error"))
+		return ERR_PTR(-EINVAL);
+	if (IS_ERR(vaddr))
+		return vaddr;
+	buffer->vaddr = vaddr;
+	buffer->kmap_cnt++;
 	return vaddr;
 }
 
 void __ion_unmap_kernel(struct ion_buffer *buffer)
 {
-	struct ion_heap *heap = buffer->heap;
+	struct ion_buffer *buffer = handle->buffer;
+	void *vaddr;
 
 	if (handle->kmap_cnt) {
 		if (handle->kmap_cnt == INT_MAX)
