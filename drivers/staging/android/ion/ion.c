@@ -195,17 +195,17 @@ void __ion_unmap_kernel(struct ion_buffer *buffer)
 	struct ion_heap *heap = buffer->heap;
 	void *vaddr;
 
-	if (handle->kmap_cnt) {
-		if (handle->kmap_cnt == INT_MAX)
+	if (buffer->kmap_cnt) {
+		if (buffer->kmap_cnt == INT_MAX)
 			return ERR_PTR(-EOVERFLOW);
 
-		handle->kmap_cnt++;
+		buffer->kmap_cnt++;
 		return buffer->vaddr;
 	}
 	vaddr = ion_buffer_kmap_get(buffer);
 	if (IS_ERR(vaddr))
 		return vaddr;
-	handle->kmap_cnt++;
+	buffer->kmap_cnt++;
 	return vaddr;
 }
 
