@@ -649,7 +649,7 @@ static const struct file_operations ion_fops = {
 	.compat_ioctl = compat_ion_ioctl
 };
 
-void ion_add_heap(struct ion_device *idev, struct ion_heap *heap)
+void ion_device_add_heap(struct ion_device *idev, struct ion_heap *heap)
 {
 	if (heap->flags & ION_HEAP_FLAG_DEFER_FREE) {
 		heap->wq = alloc_workqueue("%s", WQ_UNBOUND | WQ_MEM_RECLAIM |
