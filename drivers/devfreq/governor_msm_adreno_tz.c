@@ -632,7 +632,8 @@ static int tz_start(struct devfreq *devfreq)
 
 	for (i = 0; adreno_tz_attr_list[i] != NULL; i++)
 		device_create_file(&devfreq->dev, adreno_tz_attr_list[i]);
-
+	return 0;
+	
 #if 1
 	priv->bin.last_level = devfreq->profile->max_state - 1;
 #endif
