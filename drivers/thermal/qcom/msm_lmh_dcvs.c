@@ -1,5 +1,4 @@
 /* Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
- * Copyright (C) 2019 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -182,9 +181,6 @@ static unsigned long limits_mitigation_notify(struct limits_dcvs_hw *hw)
 
 notify_exit:
 	hw->hw_freq_limit = max_limit;
-	get_online_cpus();
-	cpufreq_update_policy(cpumask_first(&hw->core_map));
-	put_online_cpus();
 	return max_limit;
 }
 
