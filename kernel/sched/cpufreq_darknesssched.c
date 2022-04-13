@@ -21,9 +21,8 @@
 
 #include "sched.h"
 #include "tune.h"
-
-#ifdef CONFIG_SCHED_WALT
-unsigned long boosted_cpu_util(int cpu);
+#ifdef CONFIG_STATE_NOTIFIER
+#include <linux/state_notifier.h>
 #endif
 
 /* Stub out fast switch routines present on mainline to reduce the backport
@@ -31,10 +30,12 @@ unsigned long boosted_cpu_util(int cpu);
 #define cpufreq_driver_fast_switch(x, y) 0
 #define cpufreq_enable_fast_switch(x)
 #define cpufreq_disable_fast_switch(x)
-#define LATENCY_MULTIPLIER			(2000)
 #define DKGOV_KTHREAD_PRIORITY	50
 
 #define BOOST_PERC					5
+#ifdef CONFIG_STATE_NOTIFIER
+#define DEFAULT_RATE_LIMIT_SUSP_NS ((s64)(80000 * NSEC_PER_USEC))
+#endif
 
 struct dkgov_tunables {
 	struct gov_attr_set attr_set;
@@ -57,6 +58,10 @@ struct dkgov_policy {
 	s64 min_rate_limit_ns;
 	s64 up_rate_delay_ns;
 	s64 down_rate_delay_ns;
+#ifdef CONFIG_STATE_NOTIFIER
+	s64 up_rate_delay_prev_ns;
+	s64 down_rate_delay_prev_ns;
+#endif
 	unsigned int next_freq;
 
 	/* The next fields are only needed if fast switch cannot be used. */
@@ -78,6 +83,8 @@ struct dkgov_cpu {
 	unsigned long iowait_boost_max;
 	u64 last_update;
 
+	struct sched_walt_cpu_load walt_load;
+
 	/* The fields below are only needed when sharing a policy. */
 	unsigned long util;
 	unsigned long max;
@@ -87,53 +94,59 @@ struct dkgov_cpu {
 static DEFINE_PER_CPU(struct dkgov_cpu, dkgov_cpu);
 static DEFINE_PER_CPU(struct dkgov_tunables, cached_tunables);
 
-#define LITTLE_NFREQS				16
-#define BIG_NFREQS					25
+#define LITTLE_NFREQS				21
+#define BIG_NFREQS					26
 static unsigned long little_capacity[LITTLE_NFREQS] = {
 	0,
-	149,
-	225,
-	257,
-	281,
-	315,
-	368,
-	406,
-	469,
-	502,
-	538,
-	581,
-	611,
-	648,
-	684,
-	729
+	92,
+	129,
+	153,
+	177,
+	200,
+	230,
+	253,
+	277,
+	301,
+	324,
+	348,
+	371,
+	395,
+	419,
+	442,
+	466,
+	490,
+	506,
+	512,
+	525
 };
 
 static unsigned long big_capacity[BIG_NFREQS] = {
 	0,
-	149,
-	188,
-	225,
-	257,
-	281,
-	315,
-	348,
-	374,
-	428,
-	469,
-	502,
-	538,
-	581,
-	611,
-	648,
-	684,
-	729,
-	763,
-	795,
-	832,
-	868,
-	905,
-	952,
-	979
+	156,
+	220,
+	261,
+	301,
+	341,
+	381,
+	421,
+	461,
+	501,
+	542,
+	582,
+	622,
+	662,
+	702,
+	742,
+	783,
+	823,
+	863,
+	903,
+	943,
+	983,
+	1024,
+	1058,
+	1088,
+	1098
 };
 
 /************************ Governor internals ***********************/
@@ -167,7 +180,27 @@ static bool dkgov_up_down_rate_limit(struct dkgov_policy *sg_policy, u64 time,
 	s64 delta_ns;
 
 	delta_ns = time - sg_policy->last_freq_update_time;
-
+#ifdef CONFIG_STATE_NOTIFIER
+	if (!state_suspended) {
+		if (sg_policy->up_rate_delay_ns != sg_policy->up_rate_delay_prev_ns)
+			sg_policy->up_rate_delay_ns = sg_policy->up_rate_delay_prev_ns;
+		if (sg_policy->down_rate_delay_ns != sg_policy->down_rate_delay_prev_ns)
+			sg_policy->down_rate_delay_ns = sg_policy->down_rate_delay_prev_ns;
+	} else if (state_suspended) {
+		if (sg_policy->up_rate_delay_ns != DEFAULT_RATE_LIMIT_SUSP_NS) {
+			sg_policy->up_rate_delay_prev_ns = sg_policy->up_rate_delay_ns;
+			sg_policy->up_rate_delay_ns
+				= max(sg_policy->up_rate_delay_ns,
+					DEFAULT_RATE_LIMIT_SUSP_NS);
+		}
+		if (sg_policy->down_rate_delay_ns != DEFAULT_RATE_LIMIT_SUSP_NS) {
+			sg_policy->down_rate_delay_prev_ns = sg_policy->down_rate_delay_ns;
+			sg_policy->down_rate_delay_ns
+				= max(sg_policy->down_rate_delay_ns,
+					DEFAULT_RATE_LIMIT_SUSP_NS);
+		}
+	}
+#endif
 	if (next_freq > sg_policy->next_freq &&
 	    delta_ns < sg_policy->up_rate_delay_ns)
 			return true;
@@ -224,24 +257,24 @@ static unsigned int resolve_target_freq(struct cpufreq_policy *policy,
 	table = policy->freq_table;
 	if (policy->cpu < 2) {
 		for (i = 0; (table[i].frequency != CPUFREQ_TABLE_END); i++) {
-			if (table[i].frequency == CPUFREQ_ENTRY_INVALID)
-				continue;
-			if (util < little_capacity[i]
+			if (table[i].frequency == CPUFREQ_ENTRY_INVALID
 				|| i >= LITTLE_NFREQS)
+				continue;
+			if (util < little_capacity[i])
 				break;
 			target_freq = table[i].frequency;
 		}
 	} else {
 		for (i = 0; (table[i].frequency != CPUFREQ_TABLE_END); i++) {
-			if (table[i].frequency == CPUFREQ_ENTRY_INVALID)
-				continue;
-			if (util < big_capacity[i]
+			if (table[i].frequency == CPUFREQ_ENTRY_INVALID
 				|| i >= BIG_NFREQS)
+				continue;
+			if (util < big_capacity[i])
 				break;
 			target_freq = table[i].frequency;
 		}
 	}
-	return clamp_val(target_freq, policy->min, policy->max);
+	return target_freq;
 }
 
 /**
@@ -280,6 +313,7 @@ static void dkgov_get_util(unsigned long *util, unsigned long *max, u64 time)
 	struct rq *rq = cpu_rq(cpu);
 	unsigned long max_cap, rt;
 	s64 delta;
+	struct dkgov_cpu *loadcpu = &per_cpu(dkgov_cpu, cpu);
 
 	max_cap = arch_scale_cpu_capacity(NULL, cpu);
 
@@ -293,7 +327,7 @@ static void dkgov_get_util(unsigned long *util, unsigned long *max, u64 time)
 	*util = min(rq->cfs.avg.util_avg + rt, max_cap);
 #ifdef CONFIG_SCHED_WALT
 	if (!walt_disabled && sysctl_sched_use_walt_cpu_util)
-		*util = boosted_cpu_util(cpu);
+		*util = boosted_cpu_util(cpu, &loadcpu->walt_load);
 #endif
 	*max = max_cap;
 }
@@ -463,7 +497,7 @@ static void dkgov_irq_work(struct irq_work *irq_work)
 	 * after the work_in_progress flag is cleared. The effects of that are
 	 * neglected for now.
 	 */
-	queue_kthread_work(&sg_policy->worker, &sg_policy->work);
+	kthread_queue_work(&sg_policy->worker, &sg_policy->work);
 }
 
 /************************** sysfs interface ************************/
@@ -525,6 +559,9 @@ static ssize_t up_rate_limit_us_store(struct gov_attr_set *attr_set,
 
 	list_for_each_entry(sg_policy, &attr_set->policy_list, tunables_hook) {
 		sg_policy->up_rate_delay_ns = rate_limit_us * NSEC_PER_USEC;
+#ifdef CONFIG_STATE_NOTIFIER
+		sg_policy->up_rate_delay_prev_ns = rate_limit_us * NSEC_PER_USEC;
+#endif
 		update_min_rate_limit_us(sg_policy);
 	}
 
@@ -546,6 +583,9 @@ static ssize_t down_rate_limit_us_store(struct gov_attr_set *attr_set,
 
 	list_for_each_entry(sg_policy, &attr_set->policy_list, tunables_hook) {
 		sg_policy->down_rate_delay_ns = rate_limit_us * NSEC_PER_USEC;
+#ifdef CONFIG_STATE_NOTIFIER
+		sg_policy->down_rate_delay_prev_ns = rate_limit_us * NSEC_PER_USEC;
+#endif
 		update_min_rate_limit_us(sg_policy);
 	}
 
@@ -616,7 +656,7 @@ static void dkgov_policy_free(struct dkgov_policy *sg_policy)
 static int dkgov_kthread_create(struct dkgov_policy *sg_policy)
 {
 	struct task_struct *thread;
-	struct sched_param param = { .sched_priority = MAX_USER_RT_PRIO / 2 };
+	struct sched_param param = { .sched_priority = MAX_RT_PRIO-1 };
 	struct cpufreq_policy *policy = sg_policy->policy;
 	int ret;
 
@@ -624,8 +664,8 @@ static int dkgov_kthread_create(struct dkgov_policy *sg_policy)
 	if (policy->fast_switch_enabled)
 		return 0;
 
-	init_kthread_work(&sg_policy->work, dkgov_work);
-	init_kthread_worker(&sg_policy->worker);
+	kthread_init_work(&sg_policy->work, dkgov_work);
+	kthread_init_worker(&sg_policy->worker);
 	thread = kthread_create(kthread_worker_fn, &sg_policy->worker,
 				"dkgov:%d",
 				cpumask_first(policy->related_cpus));
@@ -643,6 +683,7 @@ static int dkgov_kthread_create(struct dkgov_policy *sg_policy)
 
 	sg_policy->thread = thread;
 	kthread_bind_mask(thread, policy->related_cpus);
+	/* NB: wake up so the thread does not look hung to the freezer */
 	wake_up_process(thread);
 
 	return 0;
@@ -654,7 +695,7 @@ static void dkgov_kthread_stop(struct dkgov_policy *sg_policy)
 	if (sg_policy->policy->fast_switch_enabled)
 		return;
 
-	flush_kthread_worker(&sg_policy->worker);
+	kthread_flush_worker(&sg_policy->worker);
 	kthread_stop(sg_policy->thread);
 }
 
@@ -796,7 +837,7 @@ free_sg_policy:
 	return ret;
 }
 
-static int dkgov_exit(struct cpufreq_policy *policy)
+static void dkgov_exit(struct cpufreq_policy *policy)
 {
 	struct dkgov_policy *sg_policy = policy->governor_data;
 	struct dkgov_tunables *tunables = sg_policy->tunables;
@@ -817,7 +858,7 @@ static int dkgov_exit(struct cpufreq_policy *policy)
 	dkgov_kthread_stop(sg_policy);
 	dkgov_policy_free(sg_policy);
 
-	return 0;
+	return;
 }
 
 static int dkgov_start(struct cpufreq_policy *policy)
@@ -829,6 +870,12 @@ static int dkgov_start(struct cpufreq_policy *policy)
 		sg_policy->tunables->up_rate_limit_us * NSEC_PER_USEC;
 	sg_policy->down_rate_delay_ns =
 		sg_policy->tunables->down_rate_limit_us * NSEC_PER_USEC;
+#ifdef CONFIG_STATE_NOTIFIER
+	sg_policy->up_rate_delay_prev_ns =
+		sg_policy->tunables->up_rate_limit_us * NSEC_PER_USEC;
+	sg_policy->down_rate_delay_prev_ns =
+		sg_policy->tunables->down_rate_limit_us * NSEC_PER_USEC;
+#endif
 	update_min_rate_limit_us(sg_policy);
 	sg_policy->last_freq_update_time = 0;
 	sg_policy->next_freq = UINT_MAX;
@@ -856,7 +903,7 @@ static int dkgov_start(struct cpufreq_policy *policy)
 	return 0;
 }
 
-static int dkgov_stop(struct cpufreq_policy *policy)
+static void dkgov_stop(struct cpufreq_policy *policy)
 {
 	struct dkgov_policy *sg_policy = policy->governor_data;
 	unsigned int cpu;
@@ -869,10 +916,10 @@ static int dkgov_stop(struct cpufreq_policy *policy)
 	irq_work_sync(&sg_policy->irq_work);
 	kthread_cancel_work_sync(&sg_policy->work);
 
-	return 0;
+	return;
 }
 
-static int dkgov_limits(struct cpufreq_policy *policy)
+static void dkgov_limits(struct cpufreq_policy *policy)
 {
 	struct dkgov_policy *sg_policy = policy->governor_data;
 
@@ -884,26 +931,7 @@ static int dkgov_limits(struct cpufreq_policy *policy)
 
 	sg_policy->need_freq_update = true;
 
-	return 0;
-}
-
-static int cpufreq_darknesssched_cb(struct cpufreq_policy *policy,
-				unsigned int event)
-{
-	switch(event) {
-	case CPUFREQ_GOV_POLICY_INIT:
-		return dkgov_init(policy);
-	case CPUFREQ_GOV_POLICY_EXIT:
-		return dkgov_exit(policy);
-	case CPUFREQ_GOV_START:
-		return dkgov_start(policy);
-	case CPUFREQ_GOV_STOP:
-		return dkgov_stop(policy);
-	case CPUFREQ_GOV_LIMITS:
-		return dkgov_limits(policy);
-	default:
-		BUG();
-	}
+	return;
 }
 
 #ifndef CONFIG_CPU_FREQ_DEFAULT_GOV_DARKNESSSCHED
@@ -911,7 +939,11 @@ static
 #endif
 struct cpufreq_governor darknesssched_gov = {
 	.name = "darknesssched",
-	.governor = cpufreq_darknesssched_cb,
+	.init = dkgov_init,
+	.exit = dkgov_exit,
+	.start = dkgov_start,
+	.stop = dkgov_stop,
+	.limits = dkgov_limits,
 	.owner = THIS_MODULE,
 };
 
