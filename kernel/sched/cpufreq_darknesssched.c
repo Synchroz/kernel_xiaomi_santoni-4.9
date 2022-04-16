@@ -330,6 +330,10 @@ static void dkgov_get_util(unsigned long *util, unsigned long *max, u64 time)
 		*util = boosted_cpu_util(cpu, &loadcpu->walt_load);
 #endif
 	*max = max_cap;
+#ifdef CONFIG_UCLAMP_TASK
+	*util = uclamp_util_with(rq, *util, NULL);
+	*util = min(*max, *util);
+#endif
 }
 
 static void dkgov_set_iowait_boost(struct dkgov_cpu *sg_cpu, u64 time,
@@ -934,7 +938,10 @@ static void dkgov_limits(struct cpufreq_policy *policy)
 	return;
 }
 
-static struct cpufreq_governor darknesssched_gov = {
+#ifndef CONFIG_CPU_FREQ_DEFAULT_GOV_DARKNESSSCHED
+static
+#endif
+struct cpufreq_governor darknesssched_gov = {
 	.name = "darknesssched",
 	.init = dkgov_init,
 	.exit = dkgov_exit,
