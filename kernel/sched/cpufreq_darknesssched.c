@@ -935,8 +935,6 @@ static void dkgov_limits(struct cpufreq_policy *policy)
 }
 
 #ifndef CONFIG_CPU_FREQ_DEFAULT_GOV_DARKNESSSCHED
-static
-#endif
 struct cpufreq_governor darknesssched_gov = {
 	.name = "darknesssched",
 	.init = dkgov_init,
@@ -946,9 +944,10 @@ struct cpufreq_governor darknesssched_gov = {
 	.limits = dkgov_limits,
 	.owner = THIS_MODULE,
 };
+#endif
 
 static int __init dkgov_register(void)
 {
 	return cpufreq_register_governor(&darknesssched_gov);
 }
-fs_initcall(dkgov_register);
+core_initcall(dkgov_register);
