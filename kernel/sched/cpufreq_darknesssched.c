@@ -634,6 +634,8 @@ static struct kobj_type dkgov_tunables_ktype = {
 
 /********************** cpufreq governor interface *********************/
 
+static struct cpufreq_governor darknesssched_gov;
+
 static struct dkgov_policy *dkgov_policy_alloc(struct cpufreq_policy *policy)
 {
 	struct dkgov_policy *sg_policy;
@@ -936,10 +938,7 @@ static void dkgov_limits(struct cpufreq_policy *policy)
 	return;
 }
 
-#ifndef CONFIG_CPU_FREQ_DEFAULT_GOV_DARKNESSSCHED
-static
-#endif
-struct cpufreq_governor darknesssched_gov = {
+static struct cpufreq_governor darknesssched_gov = {
 	.name = "darknesssched",
 	.init = dkgov_init,
 	.exit = dkgov_exit,
