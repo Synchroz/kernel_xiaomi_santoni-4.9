@@ -20,8 +20,7 @@
 #include "tune.h"
 
 #define SUGOV_KTHREAD_PRIORITY	50
-#define UP_RATE_LIMIT_US		(5000)
-#define DOWN_RATE_LIMIT_US		(20000)
+#define LATENCY_MULTIPLIER	    (1000)
 
 struct sugov_tunables {
 	struct gov_attr_set attr_set;
@@ -772,8 +771,8 @@ static int sugov_init(struct cpufreq_policy *policy)
 	tunables->up_rate_limit_us = UP_RATE_LIMIT_US / NSEC_PER_USEC;
 	tunables->down_rate_limit_us = DOWN_RATE_LIMIT_US * NSEC_PER_USEC;
 #else
-	tunables->up_rate_limit_us = LATENCY_MULTIPLIER;
-	tunables->down_rate_limit_us = LATENCY_MULTIPLIER;
+	tunables->up_rate_limit_us = LATENCY_MULTIPLIER / 2;
+	tunables->down_rate_limit_us = LATENCY_MULTIPLIER * 20;
 #endif
 	tunables->iowait_boost_enable = true;
 

@@ -32,7 +32,8 @@
 #define cpufreq_disable_fast_switch(x)
 #define DKGOV_KTHREAD_PRIORITY	50
 
-#define BOOST_PERC					5
+#define BOOST_PERC					10
+#define LATENCY_MULTIPLIER			(1000)
 #ifdef CONFIG_STATE_NOTIFIER
 #define DEFAULT_RATE_LIMIT_SUSP_NS ((s64)(80000 * NSEC_PER_USEC))
 #endif
@@ -759,8 +760,8 @@ static void get_tunables_data(struct dkgov_tunables *tunables,
 	}
 
 initialize:
-	tunables->up_rate_limit_us = LATENCY_MULTIPLIER;
-	tunables->down_rate_limit_us = LATENCY_MULTIPLIER;
+	tunables->up_rate_limit_us = LATENCY_MULTIPLIER / 2;
+	tunables->down_rate_limit_us = LATENCY_MULTIPLIER * 20;
 	lat = policy->cpuinfo.transition_latency / NSEC_PER_USEC;
 	if (lat) {
 		tunables->up_rate_limit_us *= lat;
