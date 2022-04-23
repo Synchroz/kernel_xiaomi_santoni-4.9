@@ -130,8 +130,6 @@ config CPU_FREQ_DEFAULT_GOV_SCHEDUTIL
 	  have a look at the help section of that governor. The fallback
 	  governor will be 'performance'.
 
-endchoice
-
 config CPU_FREQ_DEFAULT_GOV_DARKNESSSCHED
 	bool "darknesssched"
 	depends on SMP
@@ -141,6 +139,8 @@ config CPU_FREQ_DEFAULT_GOV_DARKNESSSCHED
 	  Use the 'darknesssched' CPUFreq governor by default. If unsure,
 	  have a look at the help section of that governor. The fallback
 	  governor will be 'performance'.
+
+endchoice
 
 config CPU_FREQ_GOV_PERFORMANCE
 	tristate "'performance' governor"
@@ -266,8 +266,6 @@ config CPU_FREQ_GOV_SCHEDUTIL
 
 	  If in doubt, say N.
 
-comment "CPU frequency scaling drivers"
-
 config CPU_FREQ_GOV_DARKNESSSCHED
 	bool "'darknesssched' cpufreq policy governor"
 	depends on CPU_FREQ && SMP && ARCH_MSM8940
@@ -284,6 +282,8 @@ config CPU_FREQ_GOV_DARKNESSSCHED
 	  both cases.
 
 	  If in doubt, say N.
+
+comment "CPU frequency scaling drivers"
 	  
 config CPUFREQ_DT
 	tristate "Generic DT based cpufreq driver"
