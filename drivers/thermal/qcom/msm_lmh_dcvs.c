@@ -1,5 +1,4 @@
 /* Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
- * Copyright (C) 2019 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -28,8 +27,6 @@
 #include <linux/cpu_cooling.h>
 #include <linux/atomic.h>
 #include <linux/regulator/consumer.h>
-#include <linux/cpufreq.h>
-#include <linux/cpu.h>
 
 #include <asm/smp_plat.h>
 #include <asm/cacheflush.h>
