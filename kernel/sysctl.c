@@ -1533,8 +1533,8 @@ static struct ctl_table vm_table[] = {
 	},
 	{
 		.procname       = "swappiness_nosys",
-		.data		= &vm_swappiness,
-		.maxlen		= sizeof(vm_swappiness),
+		.data		= &vm_swappiness_user,
+		.maxlen		= sizeof(vm_swappiness_user),
 		.mode		= 0644,
 		.proc_handler	= proc_dointvec_minmax,
 		.extra1		= &zero,
