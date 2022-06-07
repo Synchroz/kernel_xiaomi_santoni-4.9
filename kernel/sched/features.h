@@ -3,7 +3,7 @@
  * them to run sooner, but does not allow tons of sleepers to
  * rip the spread apart.
  */
-SCHED_FEAT(GENTLE_FAIR_SLEEPERS, true)
+SCHED_FEAT(GENTLE_FAIR_SLEEPERS, false)
 
 /*
  * Place new tasks ahead so that they do not starve already running
@@ -42,8 +42,8 @@ SCHED_FEAT(CACHE_HOT_BUDDY, true)
  */
 SCHED_FEAT(WAKEUP_PREEMPTION, true)
 
-SCHED_FEAT(HRTICK, false)
-SCHED_FEAT(DOUBLE_TICK, false)
+SCHED_FEAT(HRTICK, true)
+SCHED_FEAT(DOUBLE_TICK, true)
 SCHED_FEAT(LB_BIAS, true)
 
 /*
@@ -100,7 +100,7 @@ SCHED_FEAT(ENERGY_AWARE, false)
  * ON: If the target CPU saves any energy, use that.
  * OFF: Use whichever of target or backup saves most.
  */
-SCHED_FEAT(FBT_STRICT_ORDER, true)
+SCHED_FEAT(FBT_STRICT_ORDER, false)
 /*
  * Enforce schedtune.prefer_idle to take need_idle path.
  * ON: schedtune.prefer_idle is replaced with need_idle
