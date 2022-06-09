@@ -281,6 +281,8 @@ config CPU_FREQ_GOV_DARKNESSSCHED
 	  frequency tipping point is at utilization/capacity equal to 80% in
 	  both cases.
 
+	  If in doubt, say N.
+
 config CPU_INPUT_BOOST
 	bool "CPU Input Boost"
 	help
@@ -338,10 +340,6 @@ config REMOVE_INPUT_BOOST_FREQ_PERF
 	  this frequency will be used.
 
 endif
-
-comment "CPU frequency scaling drivers"
-
-	  If in doubt, say N.
 
 comment "CPU frequency scaling drivers"
 	  
