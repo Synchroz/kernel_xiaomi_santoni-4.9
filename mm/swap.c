@@ -691,11 +691,22 @@ early_initcall(lru_init);
 
 void lru_add_drain_all(void)
 {
+    static seqcount_t seqcount = SEQCNT_ZERO(seqcount);
 	static DEFINE_MUTEX(lock);
 	static struct cpumask has_work;
-	int cpu;
+	int cpu, seq;
 
 	mutex_lock(&lock);
+	
+	/*
+	 * Piggyback on drain started and finished while we waited for lock:
+	 * all pages pended at the time of our enter were drained from vectors.
+	 */
+	if (__read_seqcount_retry(&seqcount, seq))
+		goto done;
+
+	raw_write_seqcount_latch(&seqcount);
+
 	get_online_cpus();
 	cpumask_clear(&has_work);
 
@@ -716,6 +727,7 @@ void lru_add_drain_all(void)
 	for_each_cpu(cpu, &has_work)
 		flush_work(&per_cpu(lru_add_drain_work, cpu));
 
+done:
 	put_online_cpus();
 	mutex_unlock(&lock);
 }
