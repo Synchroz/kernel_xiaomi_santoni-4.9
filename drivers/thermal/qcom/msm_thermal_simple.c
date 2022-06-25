@@ -49,8 +49,6 @@ static void update_online_cpu_policy(void)
 				cpufreq_update_policy(cpu);
 			if (cpumask_intersects(cpumask_of(cpu), cpu_perf_mask))
 				cpufreq_update_policy(cpu);
-			if (cpumask_intersects(cpumask_of(cpu), cpu_prime_mask))
-				cpufreq_update_policy(cpu);
 		}
 	}
 }
