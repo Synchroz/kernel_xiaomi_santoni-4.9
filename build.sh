@@ -13,7 +13,7 @@ git clone --depth=1 https://gitlab.com/Panchajanya1999/azure-clang.git clang
 
 [ -d "out" ] && rm -rf AnyKernel && rm -rf out || mkdir -p out
 
-make O=out ARCH=arm64 RM6785_defconfig
+make O=out ARCH=arm64 santono_defconfig
 
 PATH="${PWD}/clang/bin:${PATH}:${PWD}/clang/bin:${PATH}:${PWD}/clang/bin:${PATH}" \
 make -j$(nproc --all) O=out \
